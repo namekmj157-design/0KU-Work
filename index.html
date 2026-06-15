@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>학식페이 — 학교식당 모바일 결제</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+  :root {
+    --green: #2D7A4F;
+    --green-light: #E8F5EE;
+    --green-mid: #4CAF79;
+    --accent: #FF6B35;
+    --bg: #F7F9F8;
+    --card: #FFFFFF;
+    --text: #1A1A1A;
+    --sub: #6B7280;
+    --border: #E5E7EB;
+    --radius: 16px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Noto Sans KR', sans-serif; background: #E8EAE9; }
+
+  /* Phone frame */
+  .phone-wrap {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; padding: 20px;
+  }
+  .phone {
+    width: 390px; max-width: 100%; min-height: 844px;
+    background: var(--bg); border-radius: 44px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+    overflow: hidden; position: relative;
+    display: flex; flex-direction: column;
+  }
+  @media (max-width: 430px) {
+    .phone { border-radius: 0; min-height: 100vh; box-shadow: none; }
+    .phone-wrap { padding: 0; }
+  }
+
+  /* Status bar */
+  .status-bar {
+    background: var(--green); padding: 12px 24px 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .status-bar .time { color: white; font-weight: 700; font-size: 15px; }
+  .status-bar .icons { color: white; font-size: 13px; display: flex; gap: 6px; }
+
+  /* Screens */
+  .screen {
+    display: none; flex: 1; overflow-y: auto;
+    flex-direction: column;
+  }
+  .screen.active { display: flex; }
+
+  /* Top bar */
+  .topbar {
+    background: var(--green); padding: 14px 20px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .topbar-title { color: white; font-size: 18px; font-weight: 700; }
+  .topbar-back {
+    color: white; background: rgba(255,255,255,0.2);
+    border: none; border-radius: 50%; width: 34px; height: 34px;
+    cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+  }
+  .hamburger-btn {
+    background: rgba(255,255,255,0.2); border: none;
+    border-radius: 8px; padding: 6px 8px; cursor: pointer;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .hamburger-btn span {
+    display: block; width: 20px; height: 2px; background: white; border-radius: 2px;
+  }
+
+  /* Content area */
+  .content { flex: 1; overflow-y: auto; }
+
+  /* ===== AUTH SCREEN ===== */
+  #screen-auth {
+    background: linear-gradient(160deg, #2D7A4F 0%, #1a5434 50%, #0f3320 100%);
+    justify-content: center; align-items: center; padding: 40px 30px;
+  }
+  .auth-logo { text-align: center; margin-bottom: 40px; }
+  .auth-logo .logo-icon {
+    width: 80px; height: 80px; background: white; border-radius: 22px;
+    margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 40px; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .auth-logo h1 { color: white; font-size: 28px; font-weight: 900; letter-spacing: -0.5px; }
+  .auth-logo p { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 6px; }
+
+  .auth-tabs {
+    display: flex; background: rgba(255,255,255,0.12); border-radius: 12px; padding: 4px;
+    margin-bottom: 24px;
+  }
+  .auth-tab {
+    flex: 1; padding: 10px; text-align: center; border: none;
+    background: transparent; color: rgba(255,255,255,0.6); font-size: 14px;
+    font-weight: 500; border-radius: 9px; cursor: pointer; transition: all 0.2s;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .auth-tab.active { background: white; color: var(--green); font-weight: 700; }
+
+  .auth-form { width: 100%; }
+  .auth-input-group { margin-bottom: 14px; }
+  .auth-input-group label { color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 500; display: block; margin-bottom: 6px; }
+  .auth-input {
+    width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2); border-radius: 12px;
+    color: white; font-size: 15px; outline: none;
+    font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s;
+  }
+  .auth-input::placeholder { color: rgba(255,255,255,0.4); }
+  .auth-input:focus { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.15); }
+
+  .autologin-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 20px; margin-top: 4px;
+  }
+  .autologin-row label { color: rgba(255,255,255,0.7); font-size: 13px; cursor: pointer; }
+  .autologin-row input { accent-color: var(--green-mid); }
+
+  .btn-primary {
+    width: 100%; padding: 16px; background: white; color: var(--green);
+    border: none; border-radius: 14px; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; font-family: 'Noto Sans KR', sans-serif;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .btn-primary:active { transform: none; }
+
+  .find-pw-link {
+    text-align: center; margin-top: 16px;
+    color: rgba(255,255,255,0.5); font-size: 13px; cursor: pointer; text-decoration: underline;
+  }
+
+  /* ===== MAIN SCREEN ===== */
+  .main-header {
+    background: var(--green); padding: 14px 20px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .main-header-left h2 { color: white; font-size: 20px; font-weight: 900; }
+  .main-header-left p { color: rgba(255,255,255,0.75); font-size: 13px; margin-top: 2px; }
+  .main-header-right { display: flex; align-items: center; gap: 10px; }
+  .user-avatar {
+    width: 36px; height: 36px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px;
+  }
+
+  /* Wave decoration */
+  .wave-divider {
+    background: var(--green); height: 24px; position: relative; flex-shrink: 0;
+  }
+  .wave-divider::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+    height: 24px; background: var(--bg);
+    border-radius: 24px 24px 0 0;
+  }
+
+  /* Quick stats */
+  .quick-stats {
+    display: flex; gap: 10px; padding: 16px 16px 0;
+  }
+  .stat-card {
+    flex: 1; background: var(--card); border-radius: 14px; padding: 14px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .stat-card .stat-icon { font-size: 22px; margin-bottom: 6px; }
+  .stat-card .stat-num { font-size: 18px; font-weight: 700; color: var(--green); }
+  .stat-card .stat-label { font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+  /* Section */
+  .section { padding: 16px; }
+  .section-title {
+    font-size: 16px; font-weight: 700; color: var(--text);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
+  .section-title .badge {
+    font-size: 11px; font-weight: 500; background: var(--green-light);
+    color: var(--green); padding: 2px 8px; border-radius: 20px;
+  }
+
+  /* Today's menu cards */
+  .menu-cards { display: flex; flex-direction: column; gap: 10px; }
+  .menu-card {
+    background: var(--card); border-radius: var(--radius); padding: 16px;
+    box-shadow: var(--shadow); cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 14px;
+    border: 2px solid transparent;
+  }
+  .menu-card:hover { border-color: var(--green-mid); transform: translateY(-1px); }
+  .menu-card .menu-emoji { font-size: 32px; flex-shrink: 0; }
+  .menu-card .menu-info { flex: 1; }
+  .menu-card .menu-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .menu-card .menu-desc { font-size: 12px; color: var(--sub); margin-top: 3px; }
+  .menu-card .menu-price {
+    font-size: 15px; font-weight: 700; color: var(--green);
+    flex-shrink: 0;
+  }
+  .menu-card .menu-tag {
+    font-size: 10px; background: var(--green-light); color: var(--green);
+    padding: 2px 7px; border-radius: 10px; display: inline-block; margin-top: 4px;
+  }
+
+  /* Weekly calendar */
+  .week-calendar {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .week-days { display: flex; }
+  .week-day {
+    flex: 1; text-align: center; padding: 10px 4px; cursor: pointer;
+    border-bottom: 2px solid var(--border); transition: all 0.2s;
+  }
+  .week-day:hover { background: var(--green-light); }
+  .week-day.active { border-bottom-color: var(--green); background: var(--green-light); }
+  .week-day .day-name { font-size: 11px; color: var(--sub); font-weight: 500; }
+  .week-day .day-num { font-size: 16px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .week-day.active .day-name { color: var(--green); }
+  .week-day.active .day-num { color: var(--green); }
+  .week-menu-list { padding: 14px; }
+  .week-menu-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .week-menu-item:last-child { border-bottom: none; }
+  .week-menu-item .wm-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--green-mid); flex-shrink: 0;
+  }
+  .week-menu-item .wm-name { font-size: 13px; color: var(--text); flex: 1; }
+  .week-menu-item .wm-price { font-size: 13px; font-weight: 600; color: var(--green); }
+
+  /* ===== MENU DETAIL ===== */
+  .menu-hero {
+    background: linear-gradient(135deg, var(--green) 0%, #1a5434 100%);
+    padding: 30px 20px 40px; text-align: center;
+  }
+  .menu-hero-emoji { font-size: 64px; margin-bottom: 12px; }
+  .menu-hero h2 { color: white; font-size: 22px; font-weight: 900; }
+  .menu-hero .hero-price { color: rgba(255,255,255,0.85); font-size: 16px; margin-top: 6px; font-weight: 500; }
+
+  .menu-detail-tabs {
+    display: flex; background: var(--card); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; position: sticky; top: 0; z-index: 10;
+  }
+  .detail-tab {
+    flex: 1; padding: 14px; text-align: center; border: none;
+    background: transparent; color: var(--sub); font-size: 14px;
+    font-weight: 500; cursor: pointer; transition: all 0.2s;
+    border-bottom: 2px solid transparent; font-family: 'Noto Sans KR', sans-serif;
+  }
+  .detail-tab.active { color: var(--green); border-bottom-color: var(--green); font-weight: 700; }
+
+  .detail-panel { padding: 20px; }
+  .detail-panel.hidden { display: none; }
+
+  /* Nutrition */
+  .nutrition-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .nutrition-item {
+    background: var(--card); border-radius: 12px; padding: 14px;
+    box-shadow: var(--shadow); text-align: center;
+  }
+  .nutrition-item .n-label { font-size: 11px; color: var(--sub); margin-bottom: 4px; }
+  .nutrition-item .n-value { font-size: 20px; font-weight: 700; color: var(--green); }
+  .nutrition-item .n-unit { font-size: 11px; color: var(--sub); }
+  .nutrition-bar {
+    background: var(--card); border-radius: 12px; padding: 16px;
+    box-shadow: var(--shadow); margin-top: 10px;
+  }
+  .nutrition-bar .nb-label { font-size: 12px; color: var(--sub); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .nb-track { background: var(--border); border-radius: 4px; height: 8px; overflow: hidden; margin-bottom: 12px; }
+  .nb-fill { height: 100%; background: linear-gradient(90deg, var(--green-mid), var(--green)); border-radius: 4px; }
+
+  /* Payment */
+  .pay-panel { padding: 20px; }
+  .pay-item-summary {
+    background: var(--green-light); border-radius: 14px; padding: 16px;
+    margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+  }
+  .pay-item-summary .emoji { font-size: 28px; }
+  .pay-item-summary .name { font-size: 15px; font-weight: 700; flex: 1; }
+  .pay-item-summary .price { font-size: 18px; font-weight: 900; color: var(--green); }
+
+  .card-select-label { font-size: 13px; color: var(--sub); margin-bottom: 10px; font-weight: 500; }
+  .card-option {
+    background: var(--card); border: 2px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  }
+  .card-option:hover { border-color: var(--green-mid); }
+  .card-option.selected { border-color: var(--green); background: var(--green-light); }
+  .card-option .card-icon { font-size: 24px; }
+  .card-option .card-info { flex: 1; }
+  .card-option .card-name { font-size: 14px; font-weight: 600; }
+  .card-option .card-num { font-size: 12px; color: var(--sub); margin-top: 2px; }
+  .card-option .radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); }
+  .card-option.selected .radio { border-color: var(--green); background: var(--green); }
+
+  .no-card-msg {
+    text-align: center; padding: 24px;
+    color: var(--sub); font-size: 14px; background: var(--card);
+    border-radius: 14px; border: 2px dashed var(--border);
+    cursor: pointer;
+  }
+  .no-card-msg .nc-icon { font-size: 32px; margin-bottom: 8px; }
+
+  .btn-pay {
+    width: 100%; padding: 18px; background: var(--green); color: white;
+    border: none; border-radius: 14px; font-size: 17px; font-weight: 700;
+    cursor: pointer; margin-top: 20px; font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.2s;
+  }
+  .btn-pay:hover { background: #1a5434; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(45,122,79,0.4); }
+  .btn-pay:disabled { background: var(--border); color: var(--sub); cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ===== CARD MANAGEMENT ===== */
+  .cards-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .registered-card {
+    background: linear-gradient(135deg, #2D7A4F 0%, #1a5434 100%);
+    border-radius: 18px; padding: 22px;
+    position: relative; overflow: hidden;
+  }
+  .registered-card::before {
+    content: ''; position: absolute; top: -30px; right: -30px;
+    width: 100px; height: 100px; background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .registered-card .rc-label { color: rgba(255,255,255,0.65); font-size: 12px; }
+  .registered-card .rc-name { color: white; font-size: 16px; font-weight: 700; margin-top: 16px; }
+  .registered-card .rc-number { color: rgba(255,255,255,0.85); font-size: 14px; margin-top: 4px; letter-spacing: 1px; }
+  .registered-card .rc-actions {
+    display: flex; justify-content: flex-end; margin-top: 16px;
+  }
+  .btn-delete-card {
+    background: rgba(255,255,255,0.15); color: white; border: none;
+    border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif; transition: all 0.2s;
+  }
+  .btn-delete-card:hover { background: rgba(255,80,80,0.4); }
+
+  .add-card-btn {
+    background: var(--card); border: 2px dashed var(--border);
+    border-radius: 18px; padding: 24px; text-align: center;
+    cursor: pointer; transition: all 0.2s; color: var(--sub);
+  }
+  .add-card-btn:hover { border-color: var(--green); color: var(--green); }
+  .add-card-btn .add-icon { font-size: 28px; margin-bottom: 8px; }
+  .add-card-btn p { font-size: 14px; font-weight: 500; }
+
+  /* Card register modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 100; display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none; transition: all 0.3s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border-radius: 24px 24px 0 0;
+    padding: 24px; width: 100%; max-width: 390px;
+    transform: translateY(100%); transition: transform 0.3s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle {
+    width: 40px; height: 4px; background: var(--border);
+    border-radius: 2px; margin: 0 auto 20px;
+  }
+  .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 13px; color: var(--sub); font-weight: 500; margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; padding: 14px 16px; background: var(--bg);
+    border: 1.5px solid var(--border); border-radius: 12px;
+    font-size: 15px; outline: none; font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.2s;
+  }
+  .form-input:focus { border-color: var(--green); background: var(--green-light); }
+  .form-row { display: flex; gap: 10px; }
+  .form-row .form-group { flex: 1; }
+  .btn-green {
+    width: 100%; padding: 16px; background: var(--green); color: white;
+    border: none; border-radius: 14px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: 'Noto Sans KR', sans-serif; margin-top: 8px;
+    transition: all 0.2s;
+  }
+  .btn-green:hover { background: #1a5434; }
+
+  /* ===== ACCOUNT SCREEN ===== */
+  .account-header {
+    background: linear-gradient(135deg, var(--green) 0%, #1a5434 100%);
+    padding: 20px; text-align: center; padding-bottom: 30px;
+  }
+  .account-avatar {
+    width: 70px; height: 70px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; margin: 0 auto 14px;
+    display: flex; align-items: center; justify-content: center; font-size: 32px;
+    border: 3px solid rgba(255,255,255,0.4);
+  }
+  .account-header h3 { color: white; font-size: 20px; font-weight: 700; }
+  .account-header p { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; }
+  .account-id { color: rgba(255,255,255,0.6); font-size: 12px; margin-top: 2px; }
+
+  .account-section { padding: 16px; }
+  .account-item {
+    background: var(--card); border-radius: 14px; padding: 16px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px; box-shadow: var(--shadow); cursor: pointer;
+    transition: all 0.2s;
+  }
+  .account-item:hover { transform: translateX(3px); }
+  .account-item .ai-icon { font-size: 22px; width: 40px; height: 40px; background: var(--green-light); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+  .account-item .ai-label { flex: 1; font-size: 14px; font-weight: 600; }
+  .account-item .ai-arrow { color: var(--sub); }
+  .account-item .ai-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+  .logout-btn {
+    background: #FFF0ED; color: var(--accent); border: none;
+    border-radius: 14px; padding: 16px; width: 100%;
+    font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+
+  /* Sidebar */
+  .sidebar-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    border-radius: inherit;
+  }
+  .sidebar-overlay.open { opacity: 1; pointer-events: all; }
+  .sidebar {
+    position: absolute; top: 0; right: -280px; width: 280px; height: 100%;
+    background: var(--card); z-index: 60; transition: right 0.3s;
+    display: flex; flex-direction: column; padding: 0;
+  }
+  .sidebar-overlay.open .sidebar { right: 0; }
+  .sidebar-header {
+    background: var(--green); padding: 50px 20px 20px;
+  }
+  .sidebar-header .sb-name { color: white; font-size: 18px; font-weight: 700; }
+  .sidebar-header .sb-id { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; }
+  .sidebar-menu { padding: 12px 0; flex: 1; }
+  .sb-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px; cursor: pointer; transition: background 0.2s;
+    font-size: 15px; color: var(--text); font-weight: 500;
+  }
+  .sb-item:hover { background: var(--green-light); color: var(--green); }
+  .sb-item .sb-icon { font-size: 20px; }
+  .sb-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: #1A1A1A; color: white; padding: 12px 24px;
+    border-radius: 24px; font-size: 14px; font-weight: 500; z-index: 200;
+    transition: transform 0.3s; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Payment success */
+  .pay-success {
+    display: none; position: fixed; inset: 0; background: white;
+    z-index: 150; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px;
+  }
+  .pay-success.show { display: flex; }
+  .success-circle {
+    width: 100px; height: 100px; background: var(--green-light);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 50px; margin-bottom: 24px;
+    animation: pop 0.4s ease-out;
+  }
+  @keyframes pop { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  .pay-success h2 { font-size: 24px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+  .pay-success p { color: var(--sub); font-size: 14px; text-align: center; line-height: 1.6; }
+  .pay-success .receipt {
+    background: var(--bg); border-radius: 16px; padding: 20px;
+    width: 100%; margin: 24px 0; border: 1px dashed var(--border);
+  }
+  .receipt-row {
+    display: flex; justify-content: space-between; padding: 8px 0;
+    border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .receipt-row:last-child { border-bottom: none; font-weight: 700; font-size: 16px; }
+  .receipt-row .r-label { color: var(--sub); }
+  .receipt-row .r-value { color: var(--text); }
+
+  /* Find PW modal */
+  .findpw-info {
+    background: var(--green-light); border-radius: 12px; padding: 14px;
+    margin-bottom: 16px; font-size: 13px; color: var(--green); line-height: 1.6;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex; background: var(--card);
+    border-top: 1px solid var(--border); padding: 8px 0 4px; flex-shrink: 0;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 6px; cursor: pointer; transition: all 0.2s;
+    border: none; background: transparent; font-family: 'Noto Sans KR', sans-serif;
+  }
+  .nav-item .nav-icon { font-size: 22px; }
+  .nav-item .nav-label { font-size: 10px; color: var(--sub); margin-top: 2px; }
+  .nav-item.active .nav-label { color: var(--green); font-weight: 700; }
+  .nav-dot { width: 4px; height: 4px; background: var(--green); border-radius: 50%; margin: 0 auto; margin-top: 2px; opacity: 0; }
+  .nav-item.active .nav-dot { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="phone-wrap">
+<div class="phone" id="phone">
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <span class="time" id="clock">12:00</span>
+    <div class="icons"><span>WiFi</span><span>🔋</span></div>
+  </div>
+
+  <!-- AUTH SCREEN -->
+  <div class="screen active" id="screen-auth" style="flex-direction:column; justify-content:center;">
+    <div class="auth-logo">
+      <div class="logo-icon">🍱</div>
+      <h1>학식페이</h1>
+      <p>학교 식당 모바일 결제 서비스</p>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">로그인</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">회원가입</button>
+    </div>
+
+    <!-- Login form -->
+    <div class="auth-form" id="login-form">
+      <div class="auth-input-group">
+        <label>학번</label>
+        <input type="text" class="auth-input" id="login-id" placeholder="학번을 입력하세요" value="2026131507">
+      </div>
+      <div class="auth-input-group">
+        <label>비밀번호</label>
+        <input type="password" class="auth-input" id="login-pw" placeholder="비밀번호를 입력하세요" value="1234">
+      </div>
+      <div class="autologin-row">
+        <input type="checkbox" id="auto-login" checked>
+        <label for="auto-login">자동 로그인</label>
+      </div>
+      <button class="btn-primary" onclick="doLogin()">로그인</button>
+      <div class="find-pw-link" onclick="openFindPW()">비밀번호를 잊으셨나요?</div>
+    </div>
+
+    <!-- Signup form -->
+    <div class="auth-form" id="signup-form" style="display:none;">
+      <div class="auth-input-group">
+        <label>학번 (아이디로 사용)</label>
+        <input type="text" class="auth-input" id="su-id" placeholder="2026XXXXXXX">
+      </div>
+      <div class="auth-input-group">
+        <label>이름</label>
+        <input type="text" class="auth-input" id="su-name" placeholder="이름을 입력하세요">
+      </div>
+      <div class="auth-input-group">
+        <label>소속 (학과)</label>
+        <input type="text" class="auth-input" id="su-dept" placeholder="예: 서어서문학과">
+      </div>
+      <div class="auth-input-group">
+        <label>이메일</label>
+        <input type="email" class="auth-input" id="su-email" placeholder="university@edu.ac.kr">
+      </div>
+      <div class="auth-input-group">
+        <label>비밀번호</label>
+        <input type="password" class="auth-input" id="su-pw" placeholder="비밀번호 8자 이상">
+      </div>
+      <button class="btn-primary" onclick="doSignup()">회원가입</button>
+    </div>
+  </div>
+
+  <!-- MAIN SCREEN -->
+  <div class="screen" id="screen-main" style="flex-direction:column;">
+    <div class="main-header">
+      <div class="main-header-left">
+        <h2>🍱 학식페이</h2>
+        <p id="main-date">오늘의 학식</p>
+      </div>
+      <div class="main-header-right">
+        <div class="user-avatar">👤</div>
+        <button class="hamburger-btn" onclick="openSidebar()">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Quick stats -->
+      <div class="quick-stats">
+        <div class="stat-card">
+          <div class="stat-icon">🍽️</div>
+          <div class="stat-num">3</div>
+          <div class="stat-label">오늘의 메뉴</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💳</div>
+          <div class="stat-num" id="stat-cards">0</div>
+          <div class="stat-label">등록 카드</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🧾</div>
+          <div class="stat-num" id="stat-orders">0</div>
+          <div class="stat-label">이번 달 이용</div>
+        </div>
+      </div>
+
+      <!-- Today's menu -->
+      <div class="section">
+        <div class="section-title">오늘의 메뉴 <span class="badge">TODAY</span></div>
+        <div class="menu-cards">
+          <div class="menu-card" onclick="openMenuDetail(0)">
+            <div class="menu-emoji">🍚</div>
+            <div class="menu-info">
+              <div class="menu-name">한식 A</div>
+              <div class="menu-desc">된장찌개, 제육볶음, 공기밥, 김치</div>
+              <span class="menu-tag">오늘 특선</span>
+            </div>
+            <div class="menu-price">3,500원</div>
+          </div>
+          <div class="menu-card" onclick="openMenuDetail(1)">
+            <div class="menu-emoji">🍜</div>
+            <div class="menu-info">
+              <div class="menu-name">한식 B</div>
+              <div class="menu-desc">순두부찌개, 닭갈비, 공기밥, 깍두기</div>
+            </div>
+            <div class="menu-price">3,500원</div>
+          </div>
+          <div class="menu-card" onclick="openMenuDetail(2)">
+            <div class="menu-emoji">🥗</div>
+            <div class="menu-info">
+              <div class="menu-name">샐러드 세트</div>
+              <div class="menu-desc">혼합채소 샐러드, 닭가슴살, 드레싱</div>
+              <span class="menu-tag">건강식</span>
+            </div>
+            <div class="menu-price">4,500원</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly calendar -->
+      <div class="section">
+        <div class="section-title">주간 메뉴</div>
+        <div class="week-calendar">
+          <div class="week-days" id="week-days-row"></div>
+          <div class="week-menu-list" id="week-menu-list"></div>
+        </div>
+      </div>
+      <div style="height:20px;"></div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-item active" onclick="goScreen('main')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">홈</span>
+        <div class="nav-dot"></div>
+      </button>
+      <button class="nav-item" onclick="goScreen('cards')">
+        <span class="nav-icon">💳</span>
+        <span class="nav-label">카드관리</span>
+        <div class="nav-dot"></div>
+      </button>
+      <button class="nav-item" onclick="goScreen('account')">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">계정</span>
+        <div class="nav-dot"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- MENU DETAIL SCREEN -->
+  <div class="screen" id="screen-detail" style="flex-direction:column;">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goScreen('main')">←</button>
+      <span class="topbar-title">메뉴 상세</span>
+      <div style="width:34px;"></div>
+    </div>
+    <div class="content">
+      <div class="menu-hero">
+        <div class="menu-hero-emoji" id="detail-emoji">🍚</div>
+        <h2 id="detail-name">한식 A</h2>
+        <div class="hero-price" id="detail-price">3,500원</div>
+      </div>
+      <div class="menu-detail-tabs">
+        <button class="detail-tab active" onclick="switchDetailTab('nutrition')">영양정보</button>
+        <button class="detail-tab" onclick="switchDetailTab('pay')">결제하기</button>
+      </div>
+      <!-- Nutrition panel -->
+      <div class="detail-panel" id="panel-nutrition">
+        <div class="nutrition-grid">
+          <div class="nutrition-item">
+            <div class="n-label">칼로리</div>
+            <div class="n-value" id="n-kcal">680</div>
+            <div class="n-unit">kcal</div>
+          </div>
+          <div class="nutrition-item">
+            <div class="n-label">탄수화물</div>
+            <div class="n-value" id="n-carb">85</div>
+            <div class="n-unit">g</div>
+          </div>
+          <div class="nutrition-item">
+            <div class="n-label">단백질</div>
+            <div class="n-value" id="n-protein">28</div>
+            <div class="n-unit">g</div>
+          </div>
+          <div class="nutrition-item">
+            <div class="n-label">지방</div>
+            <div class="n-value" id="n-fat">22</div>
+            <div class="n-unit">g</div>
+          </div>
+        </div>
+        <div class="nutrition-bar" style="margin-top:14px;">
+          <div class="nb-label"><span>탄수화물</span><span id="nb-carb-pct">85g</span></div>
+          <div class="nb-track"><div class="nb-fill" id="nb-carb-bar" style="width:60%;"></div></div>
+          <div class="nb-label"><span>단백질</span><span id="nb-protein-pct">28g</span></div>
+          <div class="nb-track"><div class="nb-fill" style="width:40%; background: linear-gradient(90deg, #4CAF79, #2D7A4F);"></div></div>
+          <div class="nb-label"><span>지방</span><span id="nb-fat-pct">22g</span></div>
+          <div class="nb-track"><div class="nb-fill" style="width:25%; background: linear-gradient(90deg, #FF9A5C, #FF6B35);"></div></div>
+        </div>
+        <div style="text-align:center; margin-top:20px;">
+          <button class="btn-pay" style="background: var(--green);" onclick="switchDetailTab('pay')">결제하러 가기 →</button>
+        </div>
+      </div>
+      <!-- Pay panel -->
+      <div class="detail-panel hidden" id="panel-pay">
+        <div class="pay-item-summary">
+          <span class="emoji" id="pay-emoji">🍚</span>
+          <span class="name" id="pay-name">한식 A</span>
+          <span class="price" id="pay-price-show">3,500원</span>
+        </div>
+        <div class="card-select-label">결제 카드 선택</div>
+        <div id="card-options-list"></div>
+        <button class="btn-pay" id="pay-btn" onclick="doPayment()">결제하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD MANAGEMENT SCREEN -->
+  <div class="screen" id="screen-cards" style="flex-direction:column;">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goScreen('main')">←</button>
+      <span class="topbar-title">카드 관리</span>
+      <div style="width:34px;"></div>
+    </div>
+    <div class="content">
+      <div class="cards-list" id="cards-list">
+        <!-- cards rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT SCREEN -->
+  <div class="screen" id="screen-account" style="flex-direction:column;">
+    <div class="topbar">
+      <button class="topbar-back" onclick="goScreen('main')">←</button>
+      <span class="topbar-title">계정 관리</span>
+      <div style="width:34px;"></div>
+    </div>
+    <div class="content">
+      <div class="account-header">
+        <div class="account-avatar">👤</div>
+        <h3 id="acc-name">김민준</h3>
+        <p id="acc-dept">서어서문학과</p>
+        <div class="account-id" id="acc-id">학번: 2026131507</div>
+      </div>
+      <div class="account-section">
+        <div class="account-item" onclick="showToast('이메일 변경 기능은 준비 중입니다')">
+          <div class="ai-icon">📧</div>
+          <div>
+            <div class="ai-label">이메일</div>
+            <div class="ai-sub" id="acc-email">user@university.ac.kr</div>
+          </div>
+          <span class="ai-arrow">›</span>
+        </div>
+        <div class="account-item" onclick="showToast('비밀번호 재설정 링크를 이메일로 발송했습니다')">
+          <div class="ai-icon">🔒</div>
+          <div>
+            <div class="ai-label">비밀번호 변경</div>
+            <div class="ai-sub">이메일로 재설정 링크 발송</div>
+          </div>
+          <span class="ai-arrow">›</span>
+        </div>
+        <div class="account-item" onclick="goScreen('cards')">
+          <div class="ai-icon">💳</div>
+          <div>
+            <div class="ai-label">카드 관리</div>
+            <div class="ai-sub" id="acc-card-count">등록된 카드 0개</div>
+          </div>
+          <span class="ai-arrow">›</span>
+        </div>
+        <div class="account-item" onclick="showToast('알림 설정 기능은 준비 중입니다')">
+          <div class="ai-icon">🔔</div>
+          <div>
+            <div class="ai-label">알림 설정</div>
+            <div class="ai-sub">식단 알림 · 결제 완료 알림</div>
+          </div>
+          <span class="ai-arrow">›</span>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebarOnBg(event)">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="sb-name" id="sb-name">김민준 님</div>
+        <div class="sb-id" id="sb-id">서어서문학과 · 2026131507</div>
+      </div>
+      <div class="sidebar-menu">
+        <div class="sb-item" onclick="closeSidebar(); goScreen('main')"><span class="sb-icon">🏠</span> 홈</div>
+        <div class="sb-item" onclick="closeSidebar(); openMenuDetail(0)"><span class="sb-icon">🍽️</span> 오늘의 메뉴</div>
+        <div class="sb-divider"></div>
+        <div class="sb-item" onclick="closeSidebar(); goScreen('cards')"><span class="sb-icon">💳</span> 카드 관리</div>
+        <div class="sb-item" onclick="closeSidebar(); goScreen('account')"><span class="sb-icon">👤</span> 계정 관리</div>
+        <div class="sb-divider"></div>
+        <div class="sb-item" onclick="closeSidebar(); showToast('공지사항 기능은 준비 중입니다')"><span class="sb-icon">📢</span> 공지사항</div>
+        <div class="sb-item" onclick="closeSidebar(); doLogout()"><span class="sb-icon">🚪</span> 로그아웃</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card register modal -->
+  <div class="modal-overlay" id="modal-card">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h3>💳 카드 등록</h3>
+      <div class="form-group">
+        <label class="form-label">카드 번호</label>
+        <input type="text" class="form-input" id="card-num" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNum(this)">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">CVC</label>
+          <input type="text" class="form-input" id="card-cvc" placeholder="000" maxlength="3">
+        </div>
+        <div class="form-group">
+          <label class="form-label">만료일</label>
+          <input type="text" class="form-input" id="card-exp" placeholder="MM/YY" maxlength="5" oninput="formatExpiry(this)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">카드 비밀번호 앞 2자리</label>
+        <input type="password" class="form-input" id="card-pw" placeholder="**" maxlength="2">
+      </div>
+      <div class="form-group">
+        <label class="form-label">카드 별칭 (선택)</label>
+        <input type="text" class="form-input" id="card-name" placeholder="예: 주거래 카드">
+      </div>
+      <button class="btn-green" onclick="registerCard()">카드 등록하기</button>
+      <button style="width:100%; padding:12px; background:transparent; border:none; color:var(--sub); cursor:pointer; font-family:inherit; margin-top:8px;" onclick="closeModal('modal-card')">취소</button>
+    </div>
+  </div>
+
+  <!-- Find PW modal -->
+  <div class="modal-overlay" id="modal-findpw">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <h3>🔑 비밀번호 찾기</h3>
+      <div class="findpw-info">가입 시 등록한 이메일로 비밀번호 재설정 링크를 발송합니다.</div>
+      <div class="form-group">
+        <label class="form-label">학번</label>
+        <input type="text" class="form-input" placeholder="학번 입력">
+      </div>
+      <div class="form-group">
+        <label class="form-label">이메일</label>
+        <input type="email" class="form-input" id="findpw-email" placeholder="가입 시 이메일 주소">
+      </div>
+      <button class="btn-green" onclick="sendPWReset()">재설정 링크 발송</button>
+      <button style="width:100%; padding:12px; background:transparent; border:none; color:var(--sub); cursor:pointer; font-family:inherit; margin-top:8px;" onclick="closeModal('modal-findpw')">취소</button>
+    </div>
+  </div>
+
+  <!-- Payment success overlay -->
+  <div class="pay-success" id="pay-success">
+    <div class="success-circle">✅</div>
+    <h2>결제 완료!</h2>
+    <p>모바일 결제가 완료되었습니다.<br>식당 입구에서 QR코드를 제시해주세요.</p>
+    <div class="receipt">
+      <div class="receipt-row">
+        <span class="r-label">메뉴</span>
+        <span class="r-value" id="receipt-name">한식 A</span>
+      </div>
+      <div class="receipt-row">
+        <span class="r-label">결제 카드</span>
+        <span class="r-value" id="receipt-card">카드명</span>
+      </div>
+      <div class="receipt-row">
+        <span class="r-label">결제 시각</span>
+        <span class="r-value" id="receipt-time">12:00</span>
+      </div>
+      <div class="receipt-row">
+        <span class="r-label">결제 금액</span>
+        <span class="r-value" id="receipt-price" style="color:var(--green);">3,500원</span>
+      </div>
+    </div>
+    <div style="width:100%; text-align:center;">
+      <div style="font-size:80px; margin-bottom:16px;">📱</div>
+      <div style="color:var(--sub); font-size:13px; margin-bottom:20px;">입구에서 이 화면을 보여주세요</div>
+    </div>
+    <button class="btn-pay" style="background:var(--green);" onclick="closeSuccess()">확인</button>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+</div>
+</div>
+
+<script>
+// ===== STATE =====
+let state = {
+  user: null,
+  cards: [],
+  orders: 0,
+  currentMenu: 0,
+  selectedCard: null
+};
+
+const menus = [
+  { emoji: '🍚', name: '한식 A', desc: '된장찌개, 제육볶음, 공기밥, 김치', price: 3500, kcal: 680, carb: 85, protein: 28, fat: 22 },
+  { emoji: '🍜', name: '한식 B', desc: '순두부찌개, 닭갈비, 공기밥, 깍두기', price: 3500, kcal: 720, carb: 90, protein: 32, fat: 20 },
+  { emoji: '🥗', name: '샐러드 세트', desc: '혼합채소 샐러드, 닭가슴살, 드레싱', price: 4500, kcal: 380, carb: 22, protein: 42, fat: 12 }
+];
+
+const weekMenus = {
+  0: [{ name: '된장찌개 정식', price: '3,500원' }, { name: '제육볶음 정식', price: '3,500원' }, { name: '샐러드 세트', price: '4,500원' }],
+  1: [{ name: '김치찌개 정식', price: '3,500원' }, { name: '불고기 정식', price: '4,000원' }],
+  2: [{ name: '순두부찌개 정식', price: '3,500원' }, { name: '돈가스', price: '4,500원' }],
+  3: [{ name: '고등어조림 정식', price: '3,500원' }, { name: '제육볶음 정식', price: '3,500원' }],
+  4: [{ name: '청국장 정식', price: '3,500원' }, { name: '닭볶음탕 정식', price: '4,000원' }, { name: '샐러드 세트', price: '4,500원' }],
+  5: [{ name: '갈비탕', price: '5,000원' }, { name: '비빔밥', price: '4,000원' }],
+  6: [{ name: '휴무', price: '' }]
+};
+
+// Load from localStorage
+function loadState() {
+  const saved = localStorage.getItem('hakshik_state');
+  if (saved) {
+    const s = JSON.parse(saved);
+    state.user = s.user || null;
+    state.cards = s.cards || [];
+    state.orders = s.orders || 0;
+  }
+}
+
+function saveState() {
+  localStorage.setItem('hakshik_state', JSON.stringify({
+    user: state.user, cards: state.cards, orders: state.orders
+  }));
+}
+
+// ===== INIT =====
+function init() {
+  loadState();
+  updateClock();
+  setInterval(updateClock, 1000);
+  buildWeekCalendar();
+
+  if (state.user) {
+    goScreen('main');
+    updateMainStats();
+    updateUserInfo();
+  } else {
+    goScreen('auth');
+  }
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+// ===== NAVIGATION =====
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+
+  // update bottom nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navMap = { main: 0, cards: 1, account: 2 };
+  if (navMap[name] !== undefined) {
+    document.querySelectorAll('.nav-item')[navMap[name]].classList.add('active');
+  }
+
+  if (name === 'cards') renderCards();
+  if (name === 'account') updateAccountScreen();
+  if (name === 'main') updateMainStats();
+}
+
+// ===== AUTH =====
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
+  });
+  document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('signup-form').style.display = tab === 'signup' ? '' : 'none';
+}
+
+function doLogin() {
+  const id = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-pw').value.trim();
+  if (!id || !pw) { showToast('학번과 비밀번호를 입력해주세요'); return; }
+
+  // Check if user exists in localStorage or allow demo login
+  const users = JSON.parse(localStorage.getItem('hakshik_users') || '[]');
+  const found = users.find(u => u.id === id && u.pw === pw);
+  
+  if (found || (id === '2026131507' && pw === '1234')) {
+    state.user = found || { id: '2026131507', name: '김민준', dept: '서어서문학과', email: 'minjun@university.ac.kr' };
+    saveState();
+    updateUserInfo();
+    updateMainStats();
+    goScreen('main');
+    showToast('환영합니다, ' + state.user.name + ' 님! 👋');
+  } else {
+    showToast('학번 또는 비밀번호가 올바르지 않습니다');
+  }
+}
+
+function doSignup() {
+  const id = document.getElementById('su-id').value.trim();
+  const name = document.getElementById('su-name').value.trim();
+  const dept = document.getElementById('su-dept').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const pw = document.getElementById('su-pw').value.trim();
+
+  if (!id || !name || !dept || !email || !pw) { showToast('모든 항목을 입력해주세요'); return; }
+  if (pw.length < 4) { showToast('비밀번호는 4자 이상 입력해주세요'); return; }
+
+  const users = JSON.parse(localStorage.getItem('hakshik_users') || '[]');
+  if (users.find(u => u.id === id)) { showToast('이미 가입된 학번입니다'); return; }
+
+  users.push({ id, name, dept, email, pw });
+  localStorage.setItem('hakshik_users', JSON.stringify(users));
+
+  state.user = { id, name, dept, email };
+  saveState();
+  updateUserInfo();
+  updateMainStats();
+  goScreen('main');
+  showToast('회원가입이 완료되었습니다! 🎉');
+}
+
+function doLogout() {
+  state.user = null;
+  saveState();
+  goScreen('auth');
+  switchAuthTab('login');
+  showToast('로그아웃 되었습니다');
+}
+
+function openFindPW() { openModal('modal-findpw'); }
+function sendPWReset() {
+  const email = document.getElementById('findpw-email').value.trim();
+  if (!email) { showToast('이메일을 입력해주세요'); return; }
+  closeModal('modal-findpw');
+  showToast('재설정 링크를 ' + email + ' 으로 발송했습니다 ✉️');
+}
+
+// ===== MENU =====
+function buildWeekCalendar() {
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const today = new Date();
+  const todayIdx = today.getDay();
+  const row = document.getElementById('week-days-row');
+  row.innerHTML = '';
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - todayIdx + i);
+    const div = document.createElement('div');
+    div.className = 'week-day' + (i === todayIdx ? ' active' : '');
+    div.innerHTML = `<div class="day-name">${days[i]}</div><div class="day-num">${d.getDate()}</div>`;
+    div.onclick = () => selectWeekDay(i, div);
+    row.appendChild(div);
+  }
+  renderWeekMenu(todayIdx);
+}
+
+let selectedWeekDay = new Date().getDay();
+function selectWeekDay(idx, el) {
+  document.querySelectorAll('.week-day').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  selectedWeekDay = idx;
+  renderWeekMenu(idx);
+}
+
+function renderWeekMenu(idx) {
+  const list = document.getElementById('week-menu-list');
+  const items = weekMenus[idx] || [{ name: '정보 없음', price: '' }];
+  list.innerHTML = items.map(m => `
+    <div class="week-menu-item">
+      <div class="wm-dot"></div>
+      <span class="wm-name">${m.name}</span>
+      <span class="wm-price">${m.price}</span>
+    </div>
+  `).join('');
+}
+
+function openMenuDetail(idx) {
+  state.currentMenu = idx;
+  const m = menus[idx];
+  document.getElementById('detail-emoji').textContent = m.emoji;
+  document.getElementById('detail-name').textContent = m.name;
+  document.getElementById('detail-price').textContent = m.price.toLocaleString() + '원';
+  document.getElementById('n-kcal').textContent = m.kcal;
+  document.getElementById('n-carb').textContent = m.carb;
+  document.getElementById('n-protein').textContent = m.protein;
+  document.getElementById('n-fat').textContent = m.fat;
+  document.getElementById('nb-carb-pct').textContent = m.carb + 'g';
+  document.getElementById('nb-protein-pct').textContent = m.protein + 'g';
+  document.getElementById('nb-fat-pct').textContent = m.fat + 'g';
+  document.getElementById('nb-carb-bar').style.width = Math.min(m.carb, 100) + '%';
+
+  document.getElementById('pay-emoji').textContent = m.emoji;
+  document.getElementById('pay-name').textContent = m.name;
+  document.getElementById('pay-price-show').textContent = m.price.toLocaleString() + '원';
+
+  switchDetailTab('nutrition');
+  renderCardOptions();
+  goScreen('detail');
+}
+
+function switchDetailTab(tab) {
+  document.querySelectorAll('.detail-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'nutrition') || (i === 1 && tab === 'pay'));
+  });
+  document.getElementById('panel-nutrition').classList.toggle('hidden', tab !== 'nutrition');
+  document.getElementById('panel-pay').classList.toggle('hidden', tab !== 'pay');
+}
+
+// ===== CARDS =====
+function renderCards() {
+  const list = document.getElementById('cards-list');
+  list.innerHTML = '';
+
+  state.cards.forEach((card, idx) => {
+    const el = document.createElement('div');
+    el.className = 'registered-card';
+    el.innerHTML = `
+      <div class="rc-label">💳 등록 카드</div>
+      <div class="rc-name">${card.name || '카드 ' + (idx+1)}</div>
+      <div class="rc-number">${card.number}</div>
+      <div class="rc-actions">
+        <button class="btn-delete-card" onclick="deleteCard(${idx})">삭제</button>
+      </div>
+    `;
+    list.appendChild(el);
+  });
+
+  const addBtn = document.createElement('div');
+  addBtn.className = 'add-card-btn';
+  addBtn.innerHTML = '<div class="add-icon">➕</div><p>카드 추가하기</p>';
+  addBtn.onclick = () => openModal('modal-card');
+  list.appendChild(addBtn);
+}
+
+function renderCardOptions() {
+  const list = document.getElementById('card-options-list');
+  if (state.cards.length === 0) {
+    list.innerHTML = `<div class="no-card-msg" onclick="closeSidebar(); goScreen('cards')"><div class="nc-icon">💳</div>등록된 카드가 없습니다.<br>카드를 먼저 등록해주세요.</div>`;
+    document.getElementById('pay-btn').disabled = true;
+    return;
+  }
+  document.getElementById('pay-btn').disabled = false;
+  state.selectedCard = state.selectedCard || 0;
+  list.innerHTML = state.cards.map((card, idx) => `
+    <div class="card-option ${idx === state.selectedCard ? 'selected' : ''}" onclick="selectCard(${idx})">
+      <span class="card-icon">💳</span>
+      <div class="card-info">
+        <div class="card-name">${card.name || '카드 ' + (idx+1)}</div>
+        <div class="card-num">${card.number}</div>
+      </div>
+      <div class="radio"></div>
+    </div>
+  `).join('');
+}
+
+function selectCard(idx) {
+  state.selectedCard = idx;
+  renderCardOptions();
+}
+
+function registerCard() {
+  const num = document.getElementById('card-num').value.replace(/\s/g, '');
+  const cvc = document.getElementById('card-cvc').value;
+  const exp = document.getElementById('card-exp').value;
+  const pw = document.getElementById('card-pw').value;
+  const name = document.getElementById('card-name').value.trim();
+
+  if (num.length < 16) { showToast('카드 번호를 정확히 입력해주세요'); return; }
+  if (cvc.length < 3) { showToast('CVC 3자리를 입력해주세요'); return; }
+  if (!exp) { showToast('만료일을 입력해주세요'); return; }
+  if (!pw) { showToast('카드 비밀번호를 입력해주세요'); return; }
+
+  const masked = num.slice(0,4) + ' **** **** ' + num.slice(-4);
+  state.cards.push({ number: masked, name: name || '등록 카드', cvc, exp });
+  state.selectedCard = state.cards.length - 1;
+  saveState();
+  closeModal('modal-card');
+  renderCards();
+  updateMainStats();
+  showToast('카드가 등록되었습니다 ✅');
+
+  // Clear inputs
+  ['card-num','card-cvc','card-exp','card-pw','card-name'].forEach(id => document.getElementById(id).value = '');
+}
+
+function deleteCard(idx) {
+  state.cards.splice(idx, 1);
+  if (state.selectedCard >= state.cards.length) state.selectedCard = Math.max(0, state.cards.length - 1);
+  saveState();
+  renderCards();
+  updateMainStats();
+  showToast('카드가 삭제되었습니다');
+}
+
+function formatCardNum(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 16);
+  el.value = v.replace(/(.{4})/g, '$1 ').trim();
+}
+function formatExpiry(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 4);
+  if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+  el.value = v;
+}
+
+// ===== PAYMENT =====
+function doPayment() {
+  if (state.cards.length === 0) { showToast('카드를 먼저 등록해주세요'); return; }
+  const m = menus[state.currentMenu];
+  const card = state.cards[state.selectedCard];
+
+  document.getElementById('receipt-name').textContent = m.emoji + ' ' + m.name;
+  document.getElementById('receipt-card').textContent = card.name + ' ' + card.number;
+  document.getElementById('receipt-price').textContent = m.price.toLocaleString() + '원';
+  document.getElementById('receipt-time').textContent = document.getElementById('clock').textContent;
+
+  state.orders++;
+  saveState();
+  updateMainStats();
+
+  document.getElementById('pay-success').classList.add('show');
+}
+
+function closeSuccess() {
+  document.getElementById('pay-success').classList.remove('show');
+  goScreen('main');
+}
+
+// ===== UPDATE UI =====
+function updateMainStats() {
+  document.getElementById('stat-cards').textContent = state.cards.length;
+  document.getElementById('stat-orders').textContent = state.orders;
+
+  const now = new Date();
+  const days = ['일','월','화','수','목','금','토'];
+  document.getElementById('main-date').textContent =
+    now.getFullYear() + '년 ' + (now.getMonth()+1) + '월 ' + now.getDate() + '일 (' + days[now.getDay()] + ')';
+}
+
+function updateUserInfo() {
+  if (!state.user) return;
+  const u = state.user;
+  document.getElementById('sb-name').textContent = u.name + ' 님';
+  document.getElementById('sb-id').textContent = u.dept + ' · ' + u.id;
+}
+
+function updateAccountScreen() {
+  if (!state.user) return;
+  const u = state.user;
+  document.getElementById('acc-name').textContent = u.name;
+  document.getElementById('acc-dept').textContent = u.dept;
+  document.getElementById('acc-id').textContent = '학번: ' + u.id;
+  document.getElementById('acc-email').textContent = u.email;
+  document.getElementById('acc-card-count').textContent = '등록된 카드 ' + state.cards.length + '개';
+}
+
+// ===== SIDEBAR =====
+function openSidebar() { document.getElementById('sidebar-overlay').classList.add('open'); }
+function closeSidebar() { document.getElementById('sidebar-overlay').classList.remove('open'); }
+function closeSidebarOnBg(e) {
+  if (e.target === document.getElementById('sidebar-overlay')) closeSidebar();
+}
+
+// ===== MODAL =====
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== START =====
+window.onload = init;
+</script>
+</body>
+</html>
